@@ -7,14 +7,15 @@ import {
   Tv,
   Zap,
   Users,
+  LucideIcon,
 } from 'lucide-react'
 import { useActivityFeed } from '@/hooks/useActivityFeed'
-import { ActivityEvent, ActivityEventType, Platform } from '@/types'
+import { ActivityEvent, ActivityEventType } from '@/types'
 import { PLATFORM_COLORS, PLATFORM_NAMES } from '@/config'
 
 const EVENT_CONFIG: Record<
   ActivityEventType,
-  { label: string; icon: React.FC<{ size?: number; className?: string }>; color: string }
+  { label: string; icon: LucideIcon; color: string }
 > = {
   follow: { label: 'Nuevo follow', icon: Heart, color: '#e040fb' },
   subscription: { label: 'Suscripción', icon: Star, color: '#f59e0b' },

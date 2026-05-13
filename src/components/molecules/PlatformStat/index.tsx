@@ -1,6 +1,5 @@
 import React from 'react';
 import { Logo } from '@/components/atoms/Logo';
-import { LiveIndicator } from '@/components/molecules/LiveIndicator';
 import { Platform, PlatformStats } from '@/types';
 import { PLATFORM_NAMES, PLATFORM_COLORS } from '@/config';
 import { Users, Heart, Clock } from 'lucide-react';
