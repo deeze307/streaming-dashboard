@@ -8,9 +8,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const { data } = await axios.get(`https://kick.com/api/v2/channels/${username}`, {
-      headers: { Accept: 'application/json' },
-    })
+    const authHeader = req.headers.authorization
+    const headers: Record<string, string> = { Accept: 'application/json' }
+    if (authHeader) headers['Authorization'] = authHeader
+
+    const { data } = await axios.get(`https://kick.com/api/v2/channels/${username}`, { headers })
 
     const chatroomId = data.chatroom?.id
     if (!chatroomId) return res.status(404).json({ error: 'Chatroom no encontrado' })
