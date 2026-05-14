@@ -44,7 +44,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     return res.json({ viewers: 0, isLive: false, foundVideoId })
-  } catch {
+  } catch (err: any) {
+    if (axios.isAxiosError(err) && err.response) {
+      const status = err.response.status
+      const reason = err.response.data?.error?.errors?.[0]?.reason ?? 'unknown'
+      if (status === 403 && reason === 'quotaExceeded') {
+        return res.status(429).json({ error: 'YouTube quota agotada', reason })
+      }
+      return res.status(status).json({ error: 'Error de YouTube API', reason })
+    }
     return res.status(500).json({ error: 'Error al contactar YouTube' })
   }
 }
