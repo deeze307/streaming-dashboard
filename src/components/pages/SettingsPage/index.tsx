@@ -207,13 +207,19 @@ export const SettingsPage: React.FC = () => {
                     </button>
                   </div>
                 ) : (
-                  <button
-                    onClick={handleTwitchConnect}
-                    className="flex items-center gap-2 px-4 py-2 rounded-lg bg-twitch/10 border border-twitch/30 text-twitch text-sm hover:bg-twitch/20 transition-colors"
-                  >
-                    <ExternalLink size={13} />
-                    Conectar cuenta de Twitch
-                  </button>
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={handleTwitchConnect}
+                      disabled={!form.twitch_username || form.twitch_username !== config.twitch_username}
+                      className="flex items-center gap-2 px-4 py-2 rounded-lg bg-twitch/10 border border-twitch/30 text-twitch text-sm hover:bg-twitch/20 transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-twitch/10"
+                    >
+                      <ExternalLink size={13} />
+                      Conectar cuenta de Twitch
+                    </button>
+                    {(!form.twitch_username || form.twitch_username !== config.twitch_username) && (
+                      <span className="text-gray-600 text-xs">Guardá primero</span>
+                    )}
+                  </div>
                 )}
               </div>
             </div>
@@ -249,13 +255,19 @@ export const SettingsPage: React.FC = () => {
                     </button>
                   </div>
                 ) : (
-                  <button
-                    onClick={handleKickConnect}
-                    className="flex items-center gap-2 px-4 py-2 rounded-lg bg-kick/10 border border-kick/30 text-kick text-sm hover:bg-kick/20 transition-colors"
-                  >
-                    <ExternalLink size={13} />
-                    Conectar cuenta de Kick
-                  </button>
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={handleKickConnect}
+                      disabled={!form.kick_username || form.kick_username !== config.kick_username}
+                      className="flex items-center gap-2 px-4 py-2 rounded-lg bg-kick/10 border border-kick/30 text-kick text-sm hover:bg-kick/20 transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-kick/10"
+                    >
+                      <ExternalLink size={13} />
+                      Conectar cuenta de Kick
+                    </button>
+                    {(!form.kick_username || form.kick_username !== config.kick_username) && (
+                      <span className="text-gray-600 text-xs">Guardá primero</span>
+                    )}
+                  </div>
                 )}
               </div>
             </div>
