@@ -58,7 +58,7 @@ function formatTimestamp(date: Date): string {
     return `${day} ${time}`
   }
 
-  const dateStr = date.toLocaleDateString('es-AR', { day: 'numeric', month: 'numeric' })
+  const dateStr = date.toLocaleDateString('es-AR', { day: 'numeric', month: 'numeric', year: '2-digit' })
   return `${dateStr} ${time}`
 }
 
