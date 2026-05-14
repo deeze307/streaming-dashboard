@@ -21,9 +21,7 @@ export const useKickActivity = (): ActivityEvent[] => {
 
       let channelId: number
       try {
-        const headers: Record<string, string> = {}
-        if (token) headers['Authorization'] = `Bearer ${token}`
-        const res = await fetch(`/api/kick/chatroom?username=${username}`, { headers })
+        const res = await fetch(`/api/kick/stats?username=${username}`)
         if (!res.ok) return
         const data = await res.json()
         channelId = data.channelId
