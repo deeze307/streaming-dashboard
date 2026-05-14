@@ -8,11 +8,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const authHeader = req.headers.authorization
-    const headers: Record<string, string> = { Accept: 'application/json' }
-    if (authHeader) headers['Authorization'] = authHeader
-
-    const { data } = await axios.get(`https://kick.com/api/v2/channels/${username}`, { headers })
+    const { data } = await axios.get(`https://kick.com/api/v1/channels/${username}`, {
+      headers: { 'User-Agent': 'Mozilla/5.0', Accept: 'application/json' },
+      timeout: 8000,
+    })
 
     const chatroomId = data.chatroom?.id
     const channelId = data.id
