@@ -28,7 +28,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const { data: tokenData } = await axios.post('https://id.kick.com/oauth/token', {
+    const { data: tokenData } = await axios.post('https://kick.com/oauth/token', {
       grant_type: 'authorization_code',
       client_id: clientId,
       client_secret: clientSecret,

@@ -29,5 +29,5 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     state: token,
   })
 
-  return res.redirect(`https://id.kick.com/oauth/authorize?${params}`)
+  return res.redirect(`https://kick.com/oauth/authorize?${params}`)
 }
