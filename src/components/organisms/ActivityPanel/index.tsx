@@ -32,8 +32,34 @@ function formatAmount(event: ActivityEvent): string | null {
   return null
 }
 
-function formatTime(date: Date): string {
-  return date.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+function formatTimestamp(date: Date): string {
+  const now = new Date()
+  const isToday =
+    date.getDate() === now.getDate() &&
+    date.getMonth() === now.getMonth() &&
+    date.getFullYear() === now.getFullYear()
+
+  const time = date.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })
+
+  if (isToday) return time
+
+  const yesterday = new Date(now)
+  yesterday.setDate(now.getDate() - 1)
+  const isYesterday =
+    date.getDate() === yesterday.getDate() &&
+    date.getMonth() === yesterday.getMonth() &&
+    date.getFullYear() === yesterday.getFullYear()
+
+  if (isYesterday) return `ayer ${time}`
+
+  const diffDays = Math.floor((now.getTime() - date.getTime()) / 86_400_000)
+  if (diffDays < 7) {
+    const day = date.toLocaleDateString('es-AR', { weekday: 'short' }).replace('.', '')
+    return `${day} ${time}`
+  }
+
+  const dateStr = date.toLocaleDateString('es-AR', { day: 'numeric', month: 'numeric' })
+  return `${dateStr} ${time}`
 }
 
 const EventRow: React.FC<{ event: ActivityEvent; isNew: boolean }> = ({ event, isNew }) => {
@@ -81,7 +107,7 @@ const EventRow: React.FC<{ event: ActivityEvent; isNew: boolean }> = ({ event, i
           >
             {PLATFORM_NAMES[event.platform]}
           </span>
-          <span className="text-gray-600 text-xs">{formatTime(event.timestamp)}</span>
+          <span className="text-gray-600 text-xs">{formatTimestamp(event.timestamp)}</span>
         </div>
       </div>
     </div>
