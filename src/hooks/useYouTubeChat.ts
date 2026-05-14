@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from 'react'
 import { ChatMessage } from '@/types'
-import { streamConfig } from '@/config'
+import { useUserConfig } from '@/contexts/UserConfigContext'
 
 export const useYouTubeChat = (): ChatMessage[] => {
+  const { config } = useUserConfig()
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const pageTokenRef = useRef<string | null>(null)
@@ -11,8 +12,8 @@ export const useYouTubeChat = (): ChatMessage[] => {
 
   useEffect(() => {
     mountedRef.current = true
-    const { channelId } = streamConfig.youtube
-    if (!channelId) return
+    const { youtube_channel_id, youtube_video_id } = config
+    if (!youtube_channel_id && !youtube_video_id) return
 
     const pollChat = async () => {
       if (!mountedRef.current || !liveChatIdRef.current) return
@@ -42,7 +43,7 @@ export const useYouTubeChat = (): ChatMessage[] => {
             }))
 
           if (newMsgs.length > 0) {
-            setMessages((prev) => [...prev, ...newMsgs].slice(-100))
+            setMessages(prev => [...prev, ...newMsgs].slice(-100))
           }
         }
 
@@ -54,15 +55,18 @@ export const useYouTubeChat = (): ChatMessage[] => {
 
     const initialize = async () => {
       try {
-        const res = await fetch(`/api/youtube/live-chat-id?channelId=${channelId}`)
+        // Prefer videoId (1 quota unit) over channelId search (100 units)
+        const params = new URLSearchParams()
+        if (youtube_video_id) params.set('videoId', youtube_video_id)
+        else params.set('channelId', youtube_channel_id)
+
+        const res = await fetch(`/api/youtube/live-chat-id?${params}`)
         if (!res.ok || !mountedRef.current) return
         const { liveChatId } = await res.json()
         if (!liveChatId) return
         liveChatIdRef.current = liveChatId
         pollChat()
-      } catch {
-        // Canal no en vivo o error de API
-      }
+      } catch {}
     }
 
     initialize()
@@ -71,7 +75,7 @@ export const useYouTubeChat = (): ChatMessage[] => {
       mountedRef.current = false
       if (timerRef.current) clearTimeout(timerRef.current)
     }
-  }, [])
+  }, [config.youtube_channel_id, config.youtube_video_id])
 
   return messages
 }
