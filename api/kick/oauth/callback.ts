@@ -8,9 +8,9 @@ const supabaseAdmin = createClient(
 )
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  const { code, error } = req.query
+  const { code, state, error } = req.query
 
-  if (error || !code || typeof code !== 'string') {
+  if (error || !code || !state || typeof code !== 'string' || typeof state !== 'string') {
     return res.redirect('/settings?kick_error=acceso_denegado')
   }
 
@@ -22,8 +22,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.redirect('/settings?kick_error=configuracion_incompleta')
   }
 
+  const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(state)
+  if (authError || !user) {
+    return res.redirect('/settings?kick_error=no_autenticado')
+  }
+
   try {
-    // Intercambiar code por access_token
     const { data: tokenData } = await axios.post('https://id.kick.com/oauth/token', {
       grant_type: 'authorization_code',
       client_id: clientId,
@@ -32,19 +36,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       code,
     })
 
-    const accessToken: string = tokenData.access_token
-
-    // Obtener user_id de Supabase desde la sesión (cookie)
-    const authHeader = req.headers.authorization
-    if (!authHeader) return res.redirect('/settings?kick_error=no_autenticado')
-
-    const { data: { user } } = await supabaseAdmin.auth.getUser(authHeader.replace('Bearer ', ''))
-    if (!user) return res.redirect('/settings?kick_error=no_autenticado')
-
-    // Guardar token en user_configs
     await supabaseAdmin
       .from('user_configs')
-      .upsert({ user_id: user.id, kick_access_token: accessToken }, { onConflict: 'user_id' })
+      .upsert({ user_id: user.id, kick_access_token: tokenData.access_token }, { onConflict: 'user_id' })
 
     return res.redirect('/settings?kick_connected=1')
   } catch {

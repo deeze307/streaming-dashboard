@@ -1,28 +1,35 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { ActivityEvent } from '@/types'
-import { streamConfig } from '@/config'
+import { useUserConfig } from '@/contexts/UserConfigContext'
 
 const EVENTSUB_URL = 'wss://eventsub.wss.twitch.tv/ws'
 const POLL_INTERVAL = 60_000
 
 export const useTwitchActivity = (): ActivityEvent[] => {
+  const { config } = useUserConfig()
   const [realtimeEvents, setRealtimeEvents] = useState<ActivityEvent[]>([])
   const [polledEvents, setPolledEvents] = useState<ActivityEvent[]>([])
   const broadcasterIdRef = useRef<string | null>(null)
   const wsRef = useRef<WebSocket | null>(null)
   const mountedRef = useRef(true)
+  const tokenRef = useRef<string | null>(null)
+
+  // Keep token in sync without triggering reconnect
+  tokenRef.current = config.twitch_access_token
 
   const fetchRecent = useCallback(async () => {
     const bId = broadcasterIdRef.current
     if (!bId || !mountedRef.current) return
 
     try {
-      const res = await fetch(`/api/twitch/activity?broadcasterId=${bId}`)
+      const headers: Record<string, string> = {}
+      if (tokenRef.current) headers['Authorization'] = `Bearer ${tokenRef.current}`
+
+      const res = await fetch(`/api/twitch/activity?broadcasterId=${bId}`, { headers })
       if (!res.ok || !mountedRef.current) return
       const { follows, subscriptions } = await res.json()
 
       const events: ActivityEvent[] = []
-
       for (const f of follows ?? []) {
         events.push({
           id: `poll-follow-${f.user_id}`,
@@ -32,7 +39,6 @@ export const useTwitchActivity = (): ActivityEvent[] => {
           timestamp: new Date(f.followed_at),
         })
       }
-
       for (const s of subscriptions ?? []) {
         if (s.user_id === bId) continue
         events.push({
@@ -43,7 +49,6 @@ export const useTwitchActivity = (): ActivityEvent[] => {
           timestamp: new Date(),
         })
       }
-
       if (events.length > 0 && mountedRef.current) setPolledEvents(events)
     } catch {}
   }, [])
@@ -56,9 +61,12 @@ export const useTwitchActivity = (): ActivityEvent[] => {
     condition: object
   ) => {
     try {
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+      if (tokenRef.current) headers['Authorization'] = `Bearer ${tokenRef.current}`
+
       await fetch('/api/twitch/eventsub', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({ sessionId, broadcasterId, type, version, condition }),
       })
     } catch {}
@@ -66,24 +74,28 @@ export const useTwitchActivity = (): ActivityEvent[] => {
 
   useEffect(() => {
     mountedRef.current = true
-    const { username } = streamConfig.twitch
-    if (!username) return
+    const { twitch_username, twitch_broadcaster_id } = config
+    if (!twitch_username && !twitch_broadcaster_id) return
+
+    if (twitch_broadcaster_id) broadcasterIdRef.current = twitch_broadcaster_id
 
     let pollInterval: ReturnType<typeof setInterval>
 
     const connect = async () => {
       if (!mountedRef.current) return
 
-      if (!broadcasterIdRef.current) {
+      if (!broadcasterIdRef.current && twitch_username) {
         try {
-          const res = await fetch(`/api/twitch/stream?username=${username}`)
+          const headers: Record<string, string> = {}
+          if (tokenRef.current) headers['Authorization'] = `Bearer ${tokenRef.current}`
+          const res = await fetch(`/api/twitch/stream?username=${twitch_username}`, { headers })
           const data = await res.json()
           broadcasterIdRef.current = data.broadcasterId
-          if (!broadcasterIdRef.current) return
-        } catch { return }
+        } catch {}
       }
 
-      const bId = broadcasterIdRef.current!
+      if (!broadcasterIdRef.current || !mountedRef.current) return
+      const bId = broadcasterIdRef.current
 
       fetchRecent()
       clearInterval(pollInterval)
@@ -136,7 +148,7 @@ export const useTwitchActivity = (): ActivityEvent[] => {
       clearInterval(pollInterval)
       wsRef.current?.close()
     }
-  }, [fetchRecent, subscribe])
+  }, [config.twitch_username, config.twitch_broadcaster_id, fetchRecent, subscribe])
 
   return useMemo(() => {
     const byId = new Map<string, ActivityEvent>()

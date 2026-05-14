@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { Settings, LogOut, ExternalLink, Youtube, Twitch, Save } from 'lucide-react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
+import { Settings, LogOut, ExternalLink, Youtube, Twitch, Save, CheckCircle, AlertCircle } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useUserConfig } from '@/contexts/UserConfigContext'
+import { supabase } from '@/lib/supabase'
 import logotipo from '@/assets/logos/logotipo.png'
 
 interface FieldProps {
@@ -30,6 +31,7 @@ export const SettingsPage: React.FC = () => {
   const { user, signOut } = useAuth()
   const { config, loading, saveConfig } = useUserConfig()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
 
   const [form, setForm] = useState({
     youtube_channel_id: '',
@@ -40,6 +42,11 @@ export const SettingsPage: React.FC = () => {
   })
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+
+  const twitchConnected = searchParams.get('twitch_connected') === '1'
+  const twitchError = searchParams.get('twitch_error')
+  const kickConnected = searchParams.get('kick_connected') === '1'
+  const kickError = searchParams.get('kick_error')
 
   useEffect(() => {
     if (!loading) {
@@ -68,8 +75,16 @@ export const SettingsPage: React.FC = () => {
     navigate('/login')
   }
 
-  const handleKickConnect = () => {
-    window.location.href = '/api/kick/oauth/authorize'
+  const handleTwitchConnect = async () => {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) return
+    window.location.href = `/api/twitch/oauth/authorize?token=${session.access_token}`
+  }
+
+  const handleKickConnect = async () => {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) return
+    window.location.href = `/api/kick/oauth/authorize?token=${session.access_token}`
   }
 
   return (
@@ -102,6 +117,18 @@ export const SettingsPage: React.FC = () => {
           <span className="text-gray-600 text-sm ml-1">{user?.email}</span>
         </div>
 
+        {(twitchConnected || twitchError || kickConnected || kickError) && (
+          <div className={`flex items-center gap-2 px-4 py-3 rounded-lg mb-4 text-sm ${
+            (twitchConnected || kickConnected) ? 'bg-green-500/10 border border-green-500/30 text-green-400' : 'bg-red-500/10 border border-red-500/30 text-red-400'
+          }`}>
+            {(twitchConnected || kickConnected) ? <CheckCircle size={15} /> : <AlertCircle size={15} />}
+            {twitchConnected && 'Twitch conectado correctamente'}
+            {twitchError && `Error al conectar Twitch: ${twitchError.replace(/_/g, ' ')}`}
+            {kickConnected && 'Kick conectado correctamente'}
+            {kickError && `Error al conectar Kick: ${kickError.replace(/_/g, ' ')}`}
+          </div>
+        )}
+
         <div className="space-y-4">
 
           {/* YouTube */}
@@ -132,12 +159,39 @@ export const SettingsPage: React.FC = () => {
               <Twitch size={16} className="text-twitch" />
               <h2 className="text-white font-medium">Twitch</h2>
             </div>
-            <Field
-              label="Username"
-              value={form.twitch_username}
-              onChange={v => setForm(f => ({ ...f, twitch_username: v }))}
-              placeholder="tu_usuario"
-            />
+            <div className="space-y-3">
+              <Field
+                label="Username"
+                value={form.twitch_username}
+                onChange={v => setForm(f => ({ ...f, twitch_username: v }))}
+                placeholder="tu_usuario"
+              />
+              <div>
+                <label className="block text-gray-400 text-xs uppercase tracking-wider mb-1.5">
+                  Eventos en tiempo real
+                </label>
+                {config.twitch_access_token ? (
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-twitch" />
+                    <span className="text-twitch text-sm">Cuenta conectada</span>
+                    <button
+                      onClick={handleTwitchConnect}
+                      className="ml-auto text-gray-500 hover:text-gray-300 text-xs transition-colors"
+                    >
+                      Reconectar
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={handleTwitchConnect}
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg bg-twitch/10 border border-twitch/30 text-twitch text-sm hover:bg-twitch/20 transition-colors"
+                  >
+                    <ExternalLink size={13} />
+                    Conectar cuenta de Twitch
+                  </button>
+                )}
+              </div>
+            </div>
           </div>
 
           {/* Kick */}

@@ -6,6 +6,9 @@ export interface UserConfig {
   youtube_channel_id: string
   youtube_video_id: string
   twitch_username: string
+  twitch_access_token: string | null
+  twitch_refresh_token: string | null
+  twitch_broadcaster_id: string | null
   kick_username: string
   kick_access_token: string | null
   refresh_interval: number
@@ -15,6 +18,9 @@ const DEFAULT_CONFIG: UserConfig = {
   youtube_channel_id: '',
   youtube_video_id: '',
   twitch_username: '',
+  twitch_access_token: null,
+  twitch_refresh_token: null,
+  twitch_broadcaster_id: null,
   kick_username: '',
   kick_access_token: null,
   refresh_interval: 15,

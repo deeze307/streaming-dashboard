@@ -3,24 +3,20 @@ import axios from 'axios'
 
 const HELIX = 'https://api.twitch.tv/helix'
 
-function twitchHeaders() {
-  return {
-    'Client-ID': process.env.TWITCH_CLIENT_ID ?? '',
-    Authorization: `Bearer ${process.env.TWITCH_ACCESS_TOKEN ?? ''}`,
-  }
-}
-
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const { broadcasterId } = req.query
   if (!broadcasterId || typeof broadcasterId !== 'string') {
     return res.status(400).json({ error: 'broadcasterId requerido' })
   }
 
-  if (!process.env.TWITCH_CLIENT_ID || !process.env.TWITCH_ACCESS_TOKEN) {
-    return res.status(500).json({ error: 'Credenciales de Twitch no configuradas' })
-  }
+  const clientId = process.env.TWITCH_CLIENT_ID
+  if (!clientId) return res.status(500).json({ error: 'TWITCH_CLIENT_ID no configurado' })
 
-  const headers = twitchHeaders()
+  const authHeader = req.headers.authorization
+  const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : process.env.TWITCH_ACCESS_TOKEN
+  if (!token) return res.status(500).json({ error: 'Token de Twitch no disponible' })
+
+  const headers = { 'Client-ID': clientId, Authorization: `Bearer ${token}` }
   const follows: any[] = []
   const subscriptions: any[] = []
 

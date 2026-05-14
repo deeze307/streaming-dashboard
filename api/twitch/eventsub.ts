@@ -11,9 +11,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(400).json({ error: 'sessionId, broadcasterId y type son requeridos' })
   }
 
-  if (!process.env.TWITCH_CLIENT_ID || !process.env.TWITCH_ACCESS_TOKEN) {
-    return res.status(500).json({ error: 'Credenciales de Twitch no configuradas' })
-  }
+  const clientId = process.env.TWITCH_CLIENT_ID
+  if (!clientId) return res.status(500).json({ error: 'TWITCH_CLIENT_ID no configurado' })
+
+  const authHeader = req.headers.authorization
+  const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : process.env.TWITCH_ACCESS_TOKEN
+  if (!token) return res.status(500).json({ error: 'Token de Twitch no disponible' })
 
   try {
     const { data, status } = await axios.post(
@@ -21,8 +24,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       { type, version, condition, transport: { method: 'websocket', session_id: sessionId } },
       {
         headers: {
-          'Client-ID': process.env.TWITCH_CLIENT_ID,
-          Authorization: `Bearer ${process.env.TWITCH_ACCESS_TOKEN}`,
+          'Client-ID': clientId,
+          Authorization: `Bearer ${token}`,
         },
       }
     )
