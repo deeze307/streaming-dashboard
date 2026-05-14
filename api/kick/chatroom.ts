@@ -15,10 +15,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const { data } = await axios.get(`https://kick.com/api/v2/channels/${username}`, { headers })
 
     const chatroomId = data.chatroom?.id
+    const channelId = data.id
     if (!chatroomId) return res.status(404).json({ error: 'Chatroom no encontrado' })
 
     res.setHeader('Cache-Control', 's-maxage=60')
-    return res.json({ chatroomId })
+    return res.json({ chatroomId, channelId })
   } catch (error: any) {
     if (axios.isAxiosError(error) && error.response) {
       return res.status(error.response.status).json({ error: 'Canal no encontrado' })

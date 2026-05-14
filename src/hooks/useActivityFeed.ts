@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { ActivityEvent } from '@/types'
 import { useTwitchActivity } from './useTwitchActivity'
 import { useYouTubeActivity } from './useYouTubeActivity'
+import { useKickActivity } from './useKickActivity'
 
 const STORAGE_KEY = 'activity_feed_v1'
 const MAX_EVENTS = 15
@@ -27,9 +28,10 @@ export const useActivityFeed = (): ActivityEvent[] => {
 
   const twitchEvents = useTwitchActivity()
   const youtubeEvents = useYouTubeActivity()
+  const kickEvents = useKickActivity()
 
   useEffect(() => {
-    const liveEvents = [...twitchEvents, ...youtubeEvents]
+    const liveEvents = [...twitchEvents, ...youtubeEvents, ...kickEvents]
     if (liveEvents.length === 0) return
 
     setEvents(prev => {
@@ -44,7 +46,7 @@ export const useActivityFeed = (): ActivityEvent[] => {
       saveToStorage(merged)
       return merged
     })
-  }, [twitchEvents, youtubeEvents])
+  }, [twitchEvents, youtubeEvents, kickEvents])
 
   return events
 }
