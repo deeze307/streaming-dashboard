@@ -25,7 +25,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     client_id: clientId,
     redirect_uri: redirectUri,
     response_type: 'code',
-    scope: 'moderator:read:followers channel:read:subscriptions bits:read',
+    scope: 'moderator:read:followers channel:read:subscriptions bits:read chat:read',
     state: token,
   })
 
