@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { Settings, LogOut, ExternalLink, Youtube, Twitch, Save, CheckCircle, AlertCircle } from 'lucide-react'
+import { Settings, LogOut, ExternalLink, Youtube, Twitch, Save, CheckCircle, AlertCircle, Check } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useUserConfig } from '@/contexts/UserConfigContext'
 import { supabase } from '@/lib/supabase'
@@ -17,15 +17,38 @@ interface FieldProps {
 const Field: React.FC<FieldProps> = ({ label, value, onChange, placeholder, type = 'text' }) => (
   <div>
     <label className="block text-gray-400 text-xs uppercase tracking-wider mb-1.5">{label}</label>
-    <input
-      type={type}
-      value={value}
-      onChange={e => onChange(e.target.value)}
-      placeholder={placeholder}
-      className="w-full bg-dashboard-bg border border-panel-border rounded-lg px-4 py-2.5 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-brand-cyan transition-colors"
-    />
+    <div className="relative">
+      <input
+        type={type}
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="w-full bg-dashboard-bg border border-panel-border rounded-lg px-4 py-2.5 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-brand-cyan transition-colors pr-9"
+      />
+      {value && (
+        <Check size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-green-400 pointer-events-none" />
+      )}
+    </div>
   </div>
 )
+
+const PlatformStatus: React.FC<{ configured: boolean; connected?: boolean }> = ({ configured, connected }) => {
+  if (connected) return (
+    <span className="flex items-center gap-1 text-xs font-medium text-green-400 bg-green-400/10 border border-green-400/20 px-2 py-0.5 rounded-full ml-auto">
+      <span className="w-1.5 h-1.5 rounded-full bg-green-400" />
+      Conectado
+    </span>
+  )
+  if (configured) return (
+    <span className="flex items-center gap-1 text-xs font-medium text-brand-cyan bg-brand-cyan/10 border border-brand-cyan/20 px-2 py-0.5 rounded-full ml-auto">
+      <Check size={10} />
+      Configurado
+    </span>
+  )
+  return (
+    <span className="text-xs text-gray-600 ml-auto">Sin configurar</span>
+  )
+}
 
 export const SettingsPage: React.FC = () => {
   const { user, signOut } = useAuth()
@@ -136,6 +159,7 @@ export const SettingsPage: React.FC = () => {
             <div className="flex items-center gap-2 mb-4">
               <Youtube size={16} className="text-youtube" />
               <h2 className="text-white font-medium">YouTube</h2>
+              <PlatformStatus configured={!!(config.youtube_channel_id || config.youtube_video_id)} />
             </div>
             <div className="space-y-3">
               <Field
@@ -158,6 +182,7 @@ export const SettingsPage: React.FC = () => {
             <div className="flex items-center gap-2 mb-4">
               <Twitch size={16} className="text-twitch" />
               <h2 className="text-white font-medium">Twitch</h2>
+              <PlatformStatus configured={!!config.twitch_username} connected={!!config.twitch_access_token} />
             </div>
             <div className="space-y-3">
               <Field
@@ -199,6 +224,7 @@ export const SettingsPage: React.FC = () => {
             <div className="flex items-center gap-2 mb-4">
               <span className="text-kick font-bold text-sm">K</span>
               <h2 className="text-white font-medium">Kick</h2>
+              <PlatformStatus configured={!!config.kick_username} connected={!!config.kick_access_token} />
             </div>
             <div className="space-y-3">
               <Field
