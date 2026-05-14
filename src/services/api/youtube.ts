@@ -6,6 +6,11 @@ let cachedVideoId: string | null = null;
 let lastSearchTime = 0;
 const SEARCH_COOLDOWN = 10 * 60 * 1000; // 10 minutes between searches
 
+// Shared live chat ID — set by useYouTubeChat, read by useYouTubeActivity
+let cachedLiveChatId: string | null = null;
+export const getLiveChatId = () => cachedLiveChatId;
+export const setLiveChatId = (id: string | null) => { cachedLiveChatId = id };
+
 export const fetchYouTubeStats = async (
   channelId?: string,
   videoId?: string

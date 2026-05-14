@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { ActivityEvent } from '@/types'
 import { useTwitchActivity } from './useTwitchActivity'
+import { useYouTubeActivity } from './useYouTubeActivity'
 
 const STORAGE_KEY = 'activity_feed_v1'
 const MAX_EVENTS = 15
@@ -9,9 +10,7 @@ function loadFromStorage(): ActivityEvent[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) return []
-    const parsed = JSON.parse(raw)
-    // JSON no preserva Date, hay que restaurarlos
-    return parsed.map((e: any) => ({ ...e, timestamp: new Date(e.timestamp) }))
+    return JSON.parse(raw).map((e: any) => ({ ...e, timestamp: new Date(e.timestamp) }))
   } catch {
     return []
   }
@@ -24,17 +23,16 @@ function saveToStorage(events: ActivityEvent[]): void {
 }
 
 export const useActivityFeed = (): ActivityEvent[] => {
-  // Inicializar desde localStorage (persiste entre recargas)
   const [events, setEvents] = useState<ActivityEvent[]>(loadFromStorage)
 
-  const liveEvents = useTwitchActivity()
+  const twitchEvents = useTwitchActivity()
+  const youtubeEvents = useYouTubeActivity()
 
-  // Cada vez que llegan eventos en vivo, mergear con los persistidos (FIFO, máx 15)
   useEffect(() => {
+    const liveEvents = [...twitchEvents, ...youtubeEvents]
     if (liveEvents.length === 0) return
 
-    setEvents((prev) => {
-      // Deduplicar por ID: los eventos en vivo tienen prioridad
+    setEvents(prev => {
       const byId = new Map<string, ActivityEvent>()
       for (const e of prev) byId.set(e.id, e)
       for (const e of liveEvents) byId.set(e.id, e)
@@ -46,7 +44,7 @@ export const useActivityFeed = (): ActivityEvent[] => {
       saveToStorage(merged)
       return merged
     })
-  }, [liveEvents])
+  }, [twitchEvents, youtubeEvents])
 
   return events
 }

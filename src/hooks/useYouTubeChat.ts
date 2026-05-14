@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { ChatMessage } from '@/types'
 import { useUserConfig } from '@/contexts/UserConfigContext'
+import { setLiveChatId } from '@/services/api/youtube'
 
 export const useYouTubeChat = (): ChatMessage[] => {
   const { config } = useUserConfig()
@@ -65,6 +66,7 @@ export const useYouTubeChat = (): ChatMessage[] => {
         const { liveChatId } = await res.json()
         if (!liveChatId) return
         liveChatIdRef.current = liveChatId
+        setLiveChatId(liveChatId)
         pollChat()
       } catch {}
     }
