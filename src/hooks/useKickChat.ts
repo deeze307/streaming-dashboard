@@ -13,7 +13,6 @@ export const useKickChat = (): ChatMessage[] => {
   useEffect(() => {
     mountedRef.current = true
     const username = config.kick_username
-    const token = config.kick_access_token
     if (!username) return
 
     const connect = async () => {
@@ -83,7 +82,7 @@ export const useKickChat = (): ChatMessage[] => {
       wsRef.current?.close()
       wsRef.current = null
     }
-  }, [config.kick_username, config.kick_access_token])
+  }, [config.kick_username])
 
   return messages
 }
